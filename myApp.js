@@ -1,15 +1,20 @@
-require('dotenv').config();
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import express from 'express';
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+dotenv.config(); // loads .env
 
-const db = mongoose.connection;
+const app = express();
+const PORT = process.env.PORT || 3000;
+const MONGO_URI = process.env.MONGO_URI;
 
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
-db.once('open', () => {
-  console.log('MongoDB connected successfully');
+console.log("PORT =", PORT);
+console.log("MONGO_URI =", MONGO_URI);
+
+mongoose.connect(MONGO_URI)
+  .then(() => console.log("MongoDB connected successfully"))
+  .catch(err => console.log("MongoDB connection error:", err));
+
+app.listen(PORT, () => {
+  console.log(`Your app is listening on port ${PORT}`);
 });
-
-// Export mongoose for FCC tests
-module.exports = mongoose;
