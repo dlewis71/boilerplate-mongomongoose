@@ -1,42 +1,51 @@
-// myApp.js
-
-// The FCC environment typically expects 'require' for older projects.
-// Even with "type": "module" in package.json, using require may help.
-// If your test environment strictly requires 'import', stick with it.
-// We'll use your 'import' style for now, but be aware of this common issue.
-
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
 import express from 'express';
+import mongoose from 'mongoose';
+import morgan from 'morgan';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Load environment variables immediately and synchronously
-dotenv.config(); 
+dotenv.config({ path: './.env' });
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-// NOTE: Make sure MONGO_URI is set correctly in your .env file
-// myApp.js
-// ... imports and dotenv.config() ...
 
-const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/myDatabase";
-// This ensures MONGO_URI is always a string!
-// The "FATAL" console.error line should be removed or changed.
+// Middleware
+app.use(express.json());
+app.use(morgan('dev'));
 
-console.log("MONGO_URI =", MONGO_URI);
-
-mongoose.connect(MONGO_URI, { 
-    useNewUrlParser: true, 
-    useUnifiedTopology: true 
-}); 
-
-// ... rest of the code
-
-// Since you are passing locally, the server start is probably fine.
-// The tests just want to see the 'connect' method called with the right parameters.
-app.listen(PORT, () => {
-  console.log(`Your app is listening on port ${PORT}`);
+// Root route
+app.get('/', (req, res) => {
+  res.json({ message: 'Hello API' });
 });
 
-// IMPORTANT: The FCC tests usually look for the main logic to be *exported*.
-// Even for this simple setup, you might need to export the app:
-// export default app; // If using ES Modules
+// FCC test endpoints
+app.get('/_api/is-mongoose-ok', (req, res) => {
+  res.status(mongoose.connection.readyState === 1 ? 200 : 500).send(
+    mongoose.connection.readyState === 1 ? 'OK' : 'MongoDB not connected'
+  );
+});
+
+app.get('/_api/file/package.json', (req, res) => {
+  res.sendFile(path.join(__dirname, 'package.json'));
+});
+
+// MongoDB connection
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/myDatabase';
+mongoose.connect(MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+  .then(() => console.log(`MongoDB connected at ${MONGO_URI}`))
+  .catch(err => console.log('MongoDB connection error:', err));
+
+
+// Start server if not testing
+if (process.env.NODE_ENV !== 'test') {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
+export default app;
