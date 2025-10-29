@@ -1,6 +1,6 @@
 {
   "name": "fcc-mongo-mongoose-challenges",
-  "version": "0.0.1",
+  "version": "^5.11.15",
   "scripts": {
     "start": "node myApp.js"
   },
